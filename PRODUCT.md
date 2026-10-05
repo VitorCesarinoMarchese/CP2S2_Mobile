@@ -1,0 +1,2 @@
+# Brisa
+An Android and iOS chat app for a React Native academic assignment. Portuguese interface, email/password accounts, private and group chats, real-time messages, configurable group capacity and four push policies. Expo SDK 55 and TypeScript. Firebase Auth, RTDB messages, Firestore profiles/group metadata/devices, Firebase Storage photos, native FCM, independent HTTPS API. No simulated accounts or messages. Team identities and actual Firebase/hosting credentials have not been supplied.

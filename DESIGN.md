@@ -1,0 +1,2 @@
+# Brisa visual direction
+The user explicitly chose Frutiger Aero. Operate mode, phone-first native navigation with a responsive web preview. Aqua gradients, translucent white surfaces, glossy curved controls, cobalt ink, lime accents, a sky/water backdrop and bubble geometry. Native system body typography, 48px minimum actions, readable dark text on pale surfaces. Real account and conversation state; no fabricated chats. Empty states should feel welcoming. Reusable Surface, Button, Field, Avatar and Screen components own the visual treatment.

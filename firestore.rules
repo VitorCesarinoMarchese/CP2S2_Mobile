@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null && request.auth.token.firebase.sign_in_provider == 'password'; }
+    match /directory/{uid} { allow read: if signedIn(); allow write: if false; }
+    match /users/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+      match /devices/{device} { allow read, write: if false; }
+    }
+    match /groups/{id} { allow read: if signedIn() && request.auth.uid in resource.data.memberIds; allow write: if false; }
+    match /directConversations/{id} { allow read: if signedIn() && request.auth.uid in resource.data.participantIds; allow write: if false; }
+    match /{document=**} { allow read, write: if false; }
+  }
+}
