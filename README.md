@@ -14,18 +14,20 @@ Chat individual e em grupo em React Native, com uma interface Frutiger Aero. Sup
 
 O aplicativo e a API estão implementados. A configuração real do SDK cliente foi copiada do projeto CP1 autorizado e está em `firebaseConfig.json`. Verificação TypeScript, testes de domínio e testes integrados com Firebase Emulator Suite estão disponíveis no repositório.
 
-**A API ainda não foi publicada. A entrega ainda precisa da URL HTTPS real, configuração dos arquivos nativos Android/iOS, publicação das regras revisadas e evidência de push em aparelho físico.** Não apresentar esta versão como entrega final ao professor antes desses passos.
+**A API está publicada, com health check HTTP 200. O development build Android recebeu um push FCM real em emulador Android 15 com Google Play; o toque abriu a conversa e a repetição do pedido retornou `duplicate`. As regras Firestore e Realtime Database foram publicadas. As 14 verificações da API sobre grupos e políticas passaram. Ainda faltam configuração/teste iOS, configuração/teste das fotos no Supabase e os demais cenários do roteiro de validação.** Não apresentar esta versão como entrega final ao professor antes desses passos.
 
-URL pública da API: **pendente de publicação**. Depois do deploy, registrar aqui a URL obtida e conferir `GET /health` sem iniciar nenhum processo local. O servidor deve permanecer ativo durante toda a correção. Um plano de hospedagem que suspende o serviço pode comprometer esse requisito.
+URL pública da API: https://brisa-api-ral6.onrender.com. Verificação em 2026-10-05, após a criação do Firestore: `GET /health` respondeu HTTP 200 com `{"status":"ok","service":"brisa-api","firebase":"reachable"}`. Na verificação anterior, uma rota protegida sem token respondeu HTTP 401. As leituras nos dois bancos e um push real de conversa individual no Android foram confirmados. A equipe escolheu manter Render Free. Esse plano suspende o serviço após 15 minutos sem tráfego; a primeira requisição pode aguardar a inicialização. O aplicativo aguarda até 90 segundos por requisição. Isso reduz falhas durante a inicialização, mas não garante disponibilidade contínua durante a correção. Fonte: [Render Free](https://render.com/docs/free).
 
 ## Tecnologias
 
 - Expo SDK 55.0.31, React Native 0.83.10 e React 19.2.
 - TypeScript estrito, sem `any` no código do projeto.
 - React Navigation com parâmetros tipados, React Hooks e componentes compartilhados.
-- Firebase JS SDK para Authentication, Firestore, Realtime Database e Storage.
+- Firebase JS SDK para Authentication, Firestore e Realtime Database.
+- Supabase Storage Free para fotos, com uploads autorizados pela API.
 - React Native Firebase Messaging para tokens FCM e recebimento nativo Android/iOS.
 - Expo Notifications para permissões e canal Android.
+- `expo-font` 55.0.8 fixado para compatibilidade nativa com Expo 55; plugin local `plugins/withNotificationMetadata.js` resolve os metadados Android compartilhados por Expo Notifications e Firebase Messaging.
 - Node.js 24, Express 5, Firebase Admin SDK, Zod, Helmet e rate limiting na API independente.
 
 ## Responsabilidade dos serviços
@@ -35,7 +37,7 @@ URL pública da API: **pendente de publicação**. Depois do deploy, registrar a
 | Authentication | Cadastro, login por e-mail/senha, sessão persistente e logout |
 | Realtime Database | Mensagens individuais/grupo, listeners, trava e controle de acesso sincronizado |
 | Cloud Firestore | Perfis, diretório reduzido, grupos, integrantes, limite, políticas, dispositivos e deduplicação de push |
-| Firebase Storage | Arquivos das fotos de perfil/grupo; somente URL salva no Firestore |
+| Supabase Storage | Arquivos das fotos de perfil/grupo; somente URL salva no Firestore |
 | Firebase Cloud Messaging | Push nativo Android e iOS enviado pelo Admin SDK da API |
 
 Não há Cloud Functions, contas simuladas, mensagens locais de demonstração ou envio administrativo pelo app. A API recebe a mensagem, grava no RTDB e retorna sua confirmação; depois o app solicita o push. Os listeners atualizam o chat sem refresh manual.
@@ -66,23 +68,29 @@ npm run web
 
 1. Confira que `firebaseConfig.json` corresponde ao projeto desejado. Ele contém somente configuração pública do SDK cliente e deve permanecer versionado.
 2. Habilite Authentication por e-mail/senha. O app e a API rejeitam uso de outros provedores no fluxo Brisa.
-3. Crie Firestore, Realtime Database e um bucket Firebase Storage. Verifique a região/URL do RTDB e o nome do bucket no JSON.
+3. Crie Firestore e Realtime Database. Verifique a região/URL do RTDB no JSON. As fotos usam Supabase, conforme instruções abaixo.
 4. Revise as regras deste repositório e as regras atualmente publicadas no projeto compartilhado com CP1. As regras RTDB locais de CP1 foram preservadas; Brisa usa um ramo separado.
 5. Publique as regras revisadas com a CLI autenticada:
 
 ```sh
-npx firebase deploy --only firestore:rules,firestore:indexes,database,storage
+npx firebase deploy --only firestore:rules,firestore:indexes,database
 ```
 
-Esse comando altera regras do projeto Firebase real. Não executá-lo sobre regras diferentes sem conciliar os caminhos usados por CP1. As regras do Firestore e Storage deste repositório são específicas desta aplicação.
+Esse comando altera regras do projeto Firebase real. Não executá-lo sobre regras diferentes sem conciliar os caminhos usados por CP1. As regras do Firestore deste repositório são específicas desta aplicação.
 
 O Firestore exige documentos de perfil criados pela API antes de permitir conversas. Se a conta foi criada e o envio do perfil falhou, o app recupera a sessão e oferece concluir o cadastro. Contas antigas de CP1 precisam completar o perfil Brisa.
 
 ## Fotos
 
-Firebase Storage foi escolhido. O seletor solicita permissão da biblioteca de fotos e permite recortar uma imagem quadrada. Arquivos ficam em `photos/{uid}/{uuid}`. As regras permitem criação pelo próprio usuário, imagem JPEG/PNG/WebP e tamanho inferior a 5 MB. A aplicação exibe avatar padrão quando não há foto ou ocorre erro de carregamento. Nenhuma imagem Base64 é gravada nos bancos.
+Supabase Storage Free foi escolhido para evitar exigir faturamento no Firebase. O plano inclui 1 GB de arquivos, sujeito às cotas do serviço: [preços Supabase](https://supabase.com/pricing). O seletor solicita permissão da biblioteca e permite recortar uma imagem quadrada. A aplicação exibe avatar padrão quando não há foto ou ocorre erro de carregamento. Nenhuma imagem Base64 é gravada nos bancos.
 
-Ative o bucket e o plano exigido pelo Firebase Storage para seu projeto. Para uploads na prévia web, confira também CORS do bucket. Os testes de aparelho são a validação final do upload.
+1. Crie ou use um projeto Supabase no plano Free. Não é necessário ativar Firebase Storage.
+   Projeto da equipe: `https://dcsiztcuyzxskugdydpf.supabase.co`. Configure essa URL como `SUPABASE_URL` no Render.
+2. Execute [supabase/storage.sql](supabase/storage.sql) no SQL Editor. O bucket `brisa-photos` limita arquivos a JPEG/PNG/WebP e menos de 5 MB. Use um projeto sem políticas permissivas de escrita em `storage.objects`.
+3. Em Render, defina `SUPABASE_URL` com a Project URL e `SUPABASE_SERVICE_ROLE_KEY` com a chave legada `service_role`, disponível em Settings > API Keys. A chave fica somente no servidor. Nunca usar a chave `anon` neste campo nem colocar a chave administrativa no aplicativo/GitHub.
+4. Salve as variáveis e faça redeploy da API. Envie fotos pelo cadastro e pelo formulário de grupo para verificar a integração.
+
+`POST /photos/uploads` valida o Firebase ID Token e devolve uma URL de upload assinada para `{uid}/{uuid}`. O servidor confere os limites do bucket antes de autorizar; o Supabase aplica os limites no upload real. A URL assinada expira em duas horas e não permite sobrescrever outro objeto. O aplicativo envia o arquivo diretamente ao Supabase e salva somente a URL pública final no Firestore. Fotos são públicas por URL; dados cadastrais continuam protegidos. Sem políticas de INSERT/UPDATE/DELETE públicas, clientes não podem gravar fora desse fluxo. Referência: [uploads assinados](https://supabase.com/docs/reference/javascript/file-buckets-createsigneduploadurl).
 
 ## Notificações Android e iOS
 
@@ -91,7 +99,7 @@ Push funcional exige **development build ou build nativo**, não Expo Go. A web 
 ### Android
 
 1. Cadastre um aplicativo Android no mesmo Firebase com package `com.brisa.chat`, ou ajuste o package em `app.config.ts`.
-2. Baixe a configuração **cliente** `google-services.json` para a raiz. Este arquivo está ignorado no Git; a equipe deve fornecê-lo ao processo de build/EAS.
+2. A configuração cliente Android `google-services.json` está versionada e corresponde a `com.brisa.chat` no projeto `cp1mobiles2`. Ao trocar de projeto, substitua este arquivo e `firebaseConfig.json`. Não coloque credenciais Admin nesses arquivos.
 3. Habilite FCM v1 para o projeto e configure a conta do servidor com permissão de envio.
 4. Gere/instale o development build. Android 13+ solicita permissão de notificações. O canal `messages` é criado antes de obter o token.
 
@@ -111,6 +119,26 @@ npx eas-cli build --profile development --platform ios
 ```
 
 Os arquivos nativos são de cliente, mas precisam corresponder ao Firebase de `firebaseConfig.json`. A API recebe token FCM nas duas plataformas. No foreground, há feedback dentro do app; no background/fechado, FCM apresenta a notificação do sistema. O toque abre a conversa, que ainda passa por verificação de participação. O perfil oferece nova tentativa de ativação caso permissão/token falhem.
+
+### APK Android e build local
+
+O APK de avaliação inclui JavaScript e configuração Firebase. Depois de instalado, não exige Metro, Expo Go ou computador da equipe ligado. Ele usa a API pública e os serviços Firebase.
+
+Para gerar o mesmo APK, instale Node.js 24, JDK 17 e Android SDK com Platform 36, Build-Tools 36.0.0 e Platform-Tools. O Gradle instala NDK/CMake necessários.
+
+```sh
+npm ci
+cp .env.example .env
+export ANDROID_HOME="$HOME/Android/Sdk"
+export JAVA_HOME="/caminho/do/jdk17"
+npm run build:android
+```
+
+O arquivo gerado é `artifacts/brisa-android.apk`, para Android 7.0 ou superior, ARM64 e x86_64. O script usa dois workers para reduzir uso de memória. A assinatura local é a chave de desenvolvimento criada pelo prebuild; o APK serve para instalação direta e avaliação, sem publicação em loja. Para instalar por USB/emulador:
+
+```sh
+"$ANDROID_HOME/platform-tools/adb" install -r artifacts/brisa-android.apk
+```
 
 ## API online
 
@@ -160,6 +188,7 @@ Todos, exceto `/health`, exigem `Authorization: Bearer <Firebase ID token>` de u
 | `POST /conversations/direct` | Criar/localizar par único; body `participantId` |
 | `GET /conversations/:id` | Conferir participação e obter metadados |
 | `POST /groups` | Criar grupo; body `id`, `group` |
+| `POST /photos/uploads` | Autorizar upload Supabase; body `mimeType`, `size`; retorna `uploadUrl`, `photoUrl` |
 | `PUT /groups/:id` | Editar integrantes/limite/política/foto; body `group`, `expectedVersion` |
 | `POST /groups/:id/reconcile` | Concluir edição interrompida; somente proprietário |
 | `POST /conversations/:id/messages` | Persistir mensagem validada; ID estável para retry |
@@ -198,8 +227,8 @@ Realtime Database
     pending                           operação de grupo recuperável
     messages/{messageId}               mensagens persistidas
 
-Storage
-  photos/{uid}/{uuid}                  arquivo da foto
+Supabase Storage
+  brisa-photos/{uid}/{uuid}                  arquivo da foto
 ```
 
 A transação RTDB fecha o acesso durante uma edição; a transação Firestore valida/grava a capacidade e metadados; uma transação final publica o acesso. O proprietário está incluído no limite e não pode ser removido. O limite é inteiro entre 2 e 100 e nunca pode ser menor que os integrantes selecionados. A versão esperada impede sobrescrever uma edição concorrente. Clientes não conseguem contornar isso escrevendo diretamente nos bancos.
@@ -247,4 +276,22 @@ As capturas abaixo são da interface React Native executada **na prévia web**, 
 ![Cadastro em viewport de celular](docs/screenshots/register-phone-web.png)
 ![Login em desktop](docs/screenshots/login-desktop.png)
 
-Ainda é necessário adicionar prints reais de conversas, grupos, perfil e evidência de push recebido nos aparelhos Android/iOS. Para o roteiro completo, siga [validação de entrega](docs/validation.md).
+Teste nativo em 2026-10-05: duas contas temporárias por e-mail/senha, mensagem persistida no RTDB, destinatário em segundo plano, envio pela API publicada e recebimento via FCM no emulador Android 15 com Google Play. O toque abriu a conversa correta. A repetição de `POST /notifications/messages` retornou `{"status":"duplicate"}`.
+
+![Push FCM recebido no Android](docs/screenshots/android-push.png)
+![Conversa aberta pelo toque na notificação](docs/screenshots/android-chat.png)
+
+Os 14 checks da API publicada validam gerenciamento de grupos, capacidade, concorrência, remoção e as quatro políticas de notificação. Confira [resultados](docs/live-api-checks.txt). O emulador Android também recebeu uma menção real de grupo. iOS permanece sem teste por decisão da equipe. Para o roteiro completo, siga [validação de entrega](docs/validation.md).
+
+### Repetir os checks na API publicada
+
+O script cria contas reais temporárias no Firebase; não usa usuários hardcoded no aplicativo. Ele exige Firebase CLI autenticado com acesso administrativo ao projeto somente para verificar tokens e limpar as próprias fixtures. Credenciais temporárias ficam em um arquivo local com permissão 0600, fora do repositório.
+
+```sh
+node scripts/verify-live-api.mjs --setup
+# Entre no Android com a conta 0 do arquivo privado indicado e permita notificações.
+node scripts/verify-live-api.mjs --verify
+node scripts/verify-live-api.mjs --cleanup
+```
+
+Os resultados FCM do script confirmam aceitação pelo serviço, não exibição no dispositivo. Confira a bandeja Android e o toque na notificação separadamente. Não publique o arquivo temporário de credenciais.

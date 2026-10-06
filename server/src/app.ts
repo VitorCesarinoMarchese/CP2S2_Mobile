@@ -13,6 +13,7 @@ import {
   messageInputSchema,
   messageSchema,
   participants,
+  photoUploadInputSchema,
   profileInputSchema,
   uidSchema,
   userSchema,
@@ -30,6 +31,7 @@ import {
   transactRoom,
 } from './services/conversations';
 import { notificationRequestSchema, notifyMessage } from './services/notificationSender';
+import { authorizePhotoUpload } from './services/photoStorage';
 export const app = express();
 app.set('trust proxy', 1);
 app.use(helmet());
@@ -56,6 +58,14 @@ app.use(authenticate);
 function caller(value: unknown): string {
   return uidSchema.parse(value);
 }
+app.post('/photos/uploads', async (request, response) => {
+  response.json(
+    await authorizePhotoUpload(
+      caller(response.locals.uid),
+      photoUploadInputSchema.parse(request.body),
+    ),
+  );
+});
 app.put('/users/me', async (request, response) => {
   const uid = caller(response.locals.uid);
   const input = profileInputSchema.parse(request.body);

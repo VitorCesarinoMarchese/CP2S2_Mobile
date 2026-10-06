@@ -22,6 +22,7 @@ const config: ExpoConfig = {
     '@react-native-firebase/app',
     '@react-native-firebase/messaging',
     'expo-dev-client',
+    'expo-font',
     ['expo-build-properties', { ios: { useFrameworks: 'static' } }],
     [
       'expo-image-picker',
@@ -33,6 +34,7 @@ const config: ExpoConfig = {
       },
     ],
     ['expo-notifications', { color: '#087f9b', defaultChannel: 'messages' }],
+    './plugins/withNotificationMetadata',
   ],
   web: { bundler: 'metro', name: 'Brisa Chat' },
 };

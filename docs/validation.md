@@ -36,3 +36,11 @@
 Salvar prints de login, cadastro, lista de conversas, usuários, criação/edição de grupo, chat, integrantes e perfil. Salvar pelo menos uma notificação real com identificação da plataforma. Não usar alertas locais como prova de push.
 
 Entregar pelo Teams o link do GitHub e a URL HTTPS da API. Conferir os cinco nomes completos e RMs no README.
+
+## Teste nativo realizado em 2026-10-05
+
+Development build Android compilado e instalado no emulador Brisa, Android 15 com Google Play. Confirmados login por senha, perfil Firestore, token FCM privado, mensagem RTDB, push recebido em segundo plano, toque abrindo a conversa e deduplicação pela API online. Capturas: `screenshots/android-push.png` e `screenshots/android-chat.png`. Regras Firestore e RTDB publicadas; regras anteriores de CP1 no RTDB preservadas. Este teste não valida iOS, app encerrado, fotos ou todas as políticas de grupo.
+
+Na API publicada, 14 checks adicionais passaram: unicidade de conversa individual, deduplicação, capacidade de grupo, autorização do proprietário, redução de limite, edições concorrentes, quatro políticas de push e bloqueio de integrante removido. Resultados em `live-api-checks.txt`; roteiro reproduzível em `../scripts/verify-live-api.mjs`. Os números de entrega da API indicam aceitação pelo FCM. A bandeja do Android confirmou também recebimento de menção de grupo, em `screenshots/android-group-push.png`.
+
+Render Free foi mantido por escolha da equipe. O serviço pode suspender após inatividade. Fotos foram migradas para Supabase Storage Free por escolha da equipe; configuração do bucket e credenciais no Render, seguida de teste de upload, ainda precisam ser concluídas. iOS permanece sem teste por decisão da equipe.

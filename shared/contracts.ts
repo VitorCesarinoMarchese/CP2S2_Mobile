@@ -1,4 +1,16 @@
 import { z } from 'zod';
+export const photoUploadInputSchema = z.object({
+  mimeType: z.enum(['image/jpeg', 'image/png', 'image/webp']),
+  size: z
+    .number()
+    .int()
+    .positive()
+    .max(5 * 1024 * 1024 - 1),
+});
+export const photoUploadSchema = z.object({
+  uploadUrl: z.url(),
+  photoUrl: z.url(),
+});
 export const uidSchema = z
   .string()
   .min(1)

@@ -10,7 +10,7 @@ export async function apiRequest<T>(
   if (!base) throw new Error('A API ainda não foi configurada. Defina EXPO_PUBLIC_API_URL.');
   if (!auth.currentUser) throw new Error('Entre na sua conta para continuar.');
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 20_000);
+  const timer = setTimeout(() => controller.abort(), 90_000);
   try {
     const response = await fetch(`${base.replace(/\/$/, '')}${path}`, {
       method: options.method ?? 'GET',

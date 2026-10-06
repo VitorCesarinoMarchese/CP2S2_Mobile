@@ -1,0 +1,17 @@
+Live API checks — 2026-10-05 — https://brisa-api-ral6.onrender.com
+PASS Direct conversation uniqueness
+PASS Direct FCM submission and duplicate protection
+PASS Capacity enforced by API
+PASS Only owner can edit group
+PASS Limit cannot drop below membership
+PASS Concurrent owner edits reject stale version
+PASS all_group_messages submits to active recipient
+PASS mentioned_members general message is silent
+PASS mentioned_members selected recipient receives FCM
+PASS mentioned_members excludes unmentioned device
+PASS direct_messages_only group is silent
+PASS direct_messages_only still permits direct FCM
+PASS disabled group is silent
+PASS Removed member cannot read or send
+
+FCM submission counts were checked against one Android device registered by the app. Android receipt and notification taps were inspected separately. All fixtures are temporary.

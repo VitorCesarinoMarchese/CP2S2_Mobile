@@ -110,7 +110,7 @@ export function Button({
     >
       <LinearGradient
         colors={secondary ? ['#ffffff', '#e4f4f9'] : ['#08718b', '#076b88', '#075575']}
-        locations={[0, 0.5, 1]}
+        locations={secondary ? [0, 1] : [0, 0.5, 1]}
         style={styles.button}
       >
         <View style={[styles.buttonShine, { pointerEvents: 'none' }]} />
