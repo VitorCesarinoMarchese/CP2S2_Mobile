@@ -8,5 +8,10 @@ on conflict (id) do update set
   file_size_limit = excluded.file_size_limit,
   allowed_mime_types = excluded.allowed_mime_types;
 
--- Do not add INSERT, UPDATE or DELETE policies for anon/authenticated.
--- Use a dedicated Supabase project without existing permissive object policies.
+-- A restrictive policy blocks anonymous/client writes even when another
+-- permissive policy exists. Other buckets retain their existing policies.
+drop policy if exists "Brisa photos signed uploads only" on storage.objects;
+create policy "Brisa photos signed uploads only"
+on storage.objects as restrictive for all to anon, authenticated
+using (bucket_id <> 'brisa-photos')
+with check (bucket_id <> 'brisa-photos');

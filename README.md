@@ -86,11 +86,11 @@ Supabase Storage Free foi escolhido para evitar exigir faturamento no Firebase. 
 
 1. Crie ou use um projeto Supabase no plano Free. Não é necessário ativar Firebase Storage.
    Projeto da equipe: `https://dcsiztcuyzxskugdydpf.supabase.co`. Configure essa URL como `SUPABASE_URL` no Render.
-2. Execute [supabase/storage.sql](supabase/storage.sql) no SQL Editor. O bucket `brisa-photos` limita arquivos a JPEG/PNG/WebP e menos de 5 MB. Use um projeto sem políticas permissivas de escrita em `storage.objects`.
+2. Execute [supabase/storage.sql](supabase/storage.sql) no SQL Editor. O bucket `brisa-photos` limita arquivos a JPEG/PNG/WebP e menos de 5 MB. A política restritiva impede gravação direta por clientes mesmo se o projeto possuir outras políticas permissivas.
 3. Em Render, defina `SUPABASE_URL` com a Project URL e `SUPABASE_SERVICE_ROLE_KEY` com a chave legada `service_role`, disponível em Settings > API Keys. A chave fica somente no servidor. Nunca usar a chave `anon` neste campo nem colocar a chave administrativa no aplicativo/GitHub.
 4. Salve as variáveis e faça redeploy da API. Envie fotos pelo cadastro e pelo formulário de grupo para verificar a integração.
 
-`POST /photos/uploads` valida o Firebase ID Token e devolve uma URL de upload assinada para `{uid}/{uuid}`. O servidor confere os limites do bucket antes de autorizar; o Supabase aplica os limites no upload real. A URL assinada expira em duas horas e não permite sobrescrever outro objeto. O aplicativo envia o arquivo diretamente ao Supabase e salva somente a URL pública final no Firestore. Fotos são públicas por URL; dados cadastrais continuam protegidos. Sem políticas de INSERT/UPDATE/DELETE públicas, clientes não podem gravar fora desse fluxo. Referência: [uploads assinados](https://supabase.com/docs/reference/javascript/file-buckets-createsigneduploadurl).
+`POST /photos/uploads` valida o Firebase ID Token e devolve uma URL de upload assinada para `{uid}/{uuid}`. O servidor confere os limites do bucket antes de autorizar; o Supabase aplica os limites no upload real. A URL assinada expira em duas horas e não permite sobrescrever outro objeto. O aplicativo envia o arquivo diretamente ao Supabase e salva somente a URL pública final no Firestore. Fotos são públicas por URL; dados cadastrais continuam protegidos. A política restritiva em `storage.objects` impede INSERT/UPDATE/DELETE por clientes fora desse fluxo, inclusive diante de outras políticas permissivas. Referência: [uploads assinados](https://supabase.com/docs/reference/javascript/file-buckets-createsigneduploadurl).
 
 ## Notificações Android e iOS
 
@@ -121,6 +121,8 @@ npx eas-cli build --profile development --platform ios
 Os arquivos nativos são de cliente, mas precisam corresponder ao Firebase de `firebaseConfig.json`. A API recebe token FCM nas duas plataformas. No foreground, há feedback dentro do app; no background/fechado, FCM apresenta a notificação do sistema. O toque abre a conversa, que ainda passa por verificação de participação. O perfil oferece nova tentativa de ativação caso permissão/token falhem.
 
 ### APK Android e build local
+
+[Baixar APK Android de avaliação](https://github.com/VitorCesarinoMarchese/CP2S2_Mobile/releases/download/v1.0.0-android-preview/brisa-android.apk). Esta prévia mantém os itens pendentes descritos no início deste README.
 
 O APK de avaliação inclui JavaScript e configuração Firebase. Depois de instalado, não exige Metro, Expo Go ou computador da equipe ligado. Ele usa a API pública e os serviços Firebase.
 
@@ -281,7 +283,13 @@ Teste nativo em 2026-10-05: duas contas temporárias por e-mail/senha, mensagem 
 ![Push FCM recebido no Android](docs/screenshots/android-push.png)
 ![Conversa aberta pelo toque na notificação](docs/screenshots/android-chat.png)
 
-Os 14 checks da API publicada validam gerenciamento de grupos, capacidade, concorrência, remoção e as quatro políticas de notificação. Confira [resultados](docs/live-api-checks.txt). O emulador Android também recebeu uma menção real de grupo. iOS permanece sem teste por decisão da equipe. Para o roteiro completo, siga [validação de entrega](docs/validation.md).
+Os 14 checks da API publicada validam gerenciamento de grupos, capacidade, concorrência, remoção e as quatro políticas de notificação. Confira [resultados](docs/live-api-checks.txt). O emulador Android também recebeu uma menção real de grupo. O APK standalone restaurou a sessão sem Metro e abriu chat de grupo, integrantes e perfil protegido.
+
+![Chat de grupo no APK](docs/screenshots/android-group-chat.png)
+![Integrantes no Android](docs/screenshots/android-members.png)
+![Perfil no Android](docs/screenshots/android-profile.png)
+![Políticas no Android](docs/screenshots/android-group-settings.png)
+ iOS permanece sem teste por decisão da equipe. Para o roteiro completo, siga [validação de entrega](docs/validation.md).
 
 ### Repetir os checks na API publicada
 
@@ -291,6 +299,7 @@ O script cria contas reais temporárias no Firebase; não usa usuários hardcode
 node scripts/verify-live-api.mjs --setup
 # Entre no Android com a conta 0 do arquivo privado indicado e permita notificações.
 node scripts/verify-live-api.mjs --verify
+node --import tsx scripts/verify-api-deadline.mjs
 node scripts/verify-live-api.mjs --cleanup
 ```
 

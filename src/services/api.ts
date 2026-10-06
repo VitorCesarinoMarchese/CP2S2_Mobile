@@ -9,27 +9,39 @@ export async function apiRequest<T>(
   const base = process.env.EXPO_PUBLIC_API_URL;
   if (!base) throw new Error('A API ainda não foi configurada. Defina EXPO_PUBLIC_API_URL.');
   if (!auth.currentUser) throw new Error('Entre na sua conta para continuar.');
+  const user = auth.currentUser;
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 90_000);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error('O serviço demorou a responder. Verifique sua conexão e tente novamente.'));
+      controller.abort();
+    }, 90_000);
+  });
   try {
-    const response = await fetch(`${base.replace(/\/$/, '')}${path}`, {
-      method: options.method ?? 'GET',
-      headers: {
-        Authorization: `Bearer ${await auth.currentUser.getIdToken()}`,
-        'Content-Type': 'application/json',
-      },
-      ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
-      signal: controller.signal,
-    });
-    if (response.status === 204) return schema.parse(undefined);
-    const body: unknown = await response.json();
-    if (!response.ok) {
-      const error = errorSchema.safeParse(body);
-      throw new Error(
-        error.success ? error.data.error : 'O serviço não conseguiu concluir a ação.',
-      );
-    }
-    return schema.parse(body);
+    return await Promise.race([
+      timeout,
+      (async () => {
+        const response = await fetch(`${base.replace(/\/$/, '')}${path}`, {
+          method: options.method ?? 'GET',
+          headers: {
+            Authorization: `Bearer ${await user.getIdToken()}`,
+            'Content-Type': 'application/json',
+          },
+          ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
+          signal: controller.signal,
+        });
+        if (response.status === 204) return schema.parse(undefined);
+        const body: unknown = await response.json();
+        if (!response.ok) {
+          const error = errorSchema.safeParse(body);
+          throw new Error(
+            error.success ? error.data.error : 'O serviço não conseguiu concluir a ação.',
+          );
+        }
+        return schema.parse(body);
+      })(),
+    ]);
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError')
       throw new Error('O serviço demorou a responder. Verifique sua conexão e tente novamente.');
@@ -37,6 +49,6 @@ export async function apiRequest<T>(
       throw new Error('Não foi possível conectar à API. Verifique sua conexão.');
     throw error;
   } finally {
-    clearTimeout(timer);
+    if (timer !== undefined) clearTimeout(timer);
   }
 }

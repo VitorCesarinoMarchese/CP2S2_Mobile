@@ -44,3 +44,9 @@ Development build Android compilado e instalado no emulador Brisa, Android 15 co
 Na API publicada, 14 checks adicionais passaram: unicidade de conversa individual, deduplicação, capacidade de grupo, autorização do proprietário, redução de limite, edições concorrentes, quatro políticas de push e bloqueio de integrante removido. Resultados em `live-api-checks.txt`; roteiro reproduzível em `../scripts/verify-live-api.mjs`. Os números de entrega da API indicam aceitação pelo FCM. A bandeja do Android confirmou também recebimento de menção de grupo, em `screenshots/android-group-push.png`.
 
 Render Free foi mantido por escolha da equipe. O serviço pode suspender após inatividade. Fotos foram migradas para Supabase Storage Free por escolha da equipe; configuração do bucket e credenciais no Render, seguida de teste de upload, ainda precisam ser concluídas. iOS permanece sem teste por decisão da equipe.
+
+APK standalone compilado para ARM64 e x86_64, instalado no Android 15. Com Metro desligado, confirmou restauração da sessão, listagem de conversas, chat de grupo, integrantes e consulta de perfil compartilhado. SHA-256: `74b2928c7dd40774080796f178c79f78bed7c7135751b8236597935c8abfb4a7`. Fotos ainda dependem da configuração Supabase no Render.
+
+Regressão de timeout: o prazo de 90 segundos inclui obtenção do ID Token, fetch e leitura da resposta. `node --import tsx scripts/verify-api-deadline.mjs`, após setup das contas temporárias, verifica erro de prazo mesmo com obtenção de token bloqueada.
+
+Edição nativa de grupo confirmada: proprietário alterou o limite de 4 para 3 no APK e voltou ao chat com uma vaga disponível. A API retornou o limite persistido.
