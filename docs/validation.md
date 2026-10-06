@@ -50,3 +50,5 @@ APK standalone compilado para ARM64 e x86_64, instalado no Android 15. Com Metro
 Regressão de timeout: o prazo de 90 segundos inclui obtenção do ID Token, fetch e leitura da resposta. `node --import tsx scripts/verify-api-deadline.mjs`, após setup das contas temporárias, verifica erro de prazo mesmo com obtenção de token bloqueada.
 
 Edição nativa de grupo confirmada: proprietário alterou o limite de 4 para 3 no APK e voltou ao chat com uma vaga disponível. A API retornou o limite persistido.
+
+No APK standalone, uma nova menção de grupo recebeu FCM em segundo plano. O toque abriu o grupo correto e exibiu `Menção no APK Android`; captura atualizada em `screenshots/android-group-chat.png`.
