@@ -45,7 +45,7 @@ export async function apiRequest<T>(
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError')
       throw new Error('O serviço demorou a responder. Verifique sua conexão e tente novamente.');
-    if (error instanceof TypeError)
+    if (error instanceof TypeError || (error instanceof Error && error.name === 'FetchError'))
       throw new Error('Não foi possível conectar à API. Verifique sua conexão.');
     throw error;
   } finally {

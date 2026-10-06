@@ -4,6 +4,10 @@ import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getDatabase, connectDatabaseEmulator } from 'firebase/database';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import config from '../../firebaseConfig.json';
+import { fetch as nativeFetch } from 'expo/fetch';
+// Initialize React Native's Headers, Request and Response before replacing fetch.
+void globalThis.fetch;
+globalThis.fetch = nativeFetch;
 export const firebaseApp = initializeApp(config);
 export const auth = initializeAuth(firebaseApp, {
   persistence: getReactNativePersistence(AsyncStorage),

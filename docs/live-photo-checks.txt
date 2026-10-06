@@ -1,0 +1,10 @@
+PASS signed PNG upload
+PASS downloaded image bytes match
+PASS profile stores final URL
+PASS group stores final URL
+PASS API rejects 5 MB image
+PASS signed upload cannot overwrite
+PASS anonymous key cannot write images
+Photo API checks complete.
+PASS Android gallery selection, crop, upload and group URL persisted (HTTP 200, 31306 bytes)
+PASS Updated Android APK receives FCM and notification tap opens the matching conversation

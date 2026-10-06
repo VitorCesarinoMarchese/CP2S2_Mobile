@@ -14,7 +14,7 @@ Chat individual e em grupo em React Native, com uma interface Frutiger Aero. Sup
 
 O aplicativo e a API estão implementados. A configuração real do SDK cliente foi copiada do projeto CP1 autorizado e está em `firebaseConfig.json`. Verificação TypeScript, testes de domínio e testes integrados com Firebase Emulator Suite estão disponíveis no repositório.
 
-**A API está publicada, com health check HTTP 200. O development build Android recebeu um push FCM real em emulador Android 15 com Google Play; o toque abriu a conversa e a repetição do pedido retornou `duplicate`. As regras Firestore e Realtime Database foram publicadas. As 14 verificações da API sobre grupos e políticas passaram. Ainda faltam configuração/teste iOS, configuração/teste das fotos no Supabase e os demais cenários do roteiro de validação.** Não apresentar esta versão como entrega final ao professor antes desses passos.
+**A API está publicada, com health check HTTP 200. O development build Android recebeu um push FCM real em emulador Android 15 com Google Play; o toque abriu a conversa e a repetição do pedido retornou `duplicate`. As regras Firestore e Realtime Database foram publicadas. As 14 verificações da API sobre grupos e políticas passaram. O bucket Supabase foi criado pela CLI, sete checks reais de fotos passaram e uma imagem selecionada e recortada no Android foi salva no grupo. Ainda faltam configuração/teste iOS e os demais cenários do roteiro de validação.** Não apresentar esta versão como entrega final ao professor antes desses passos.
 
 URL pública da API: https://brisa-api-ral6.onrender.com. Verificação em 2026-10-05, após a criação do Firestore: `GET /health` respondeu HTTP 200 com `{"status":"ok","service":"brisa-api","firebase":"reachable"}`. Na verificação anterior, uma rota protegida sem token respondeu HTTP 401. As leituras nos dois bancos e um push real de conversa individual no Android foram confirmados. A equipe escolheu manter Render Free. Esse plano suspende o serviço após 15 minutos sem tráfego; a primeira requisição pode aguardar a inicialização. O aplicativo aguarda até 90 segundos por requisição. Isso reduz falhas durante a inicialização, mas não garante disponibilidade contínua durante a correção. Fonte: [Render Free](https://render.com/docs/free).
 
@@ -32,13 +32,13 @@ URL pública da API: https://brisa-api-ral6.onrender.com. Verificação em 2026-
 
 ## Responsabilidade dos serviços
 
-| Serviço | Responsabilidade |
-| --- | --- |
-| Authentication | Cadastro, login por e-mail/senha, sessão persistente e logout |
-| Realtime Database | Mensagens individuais/grupo, listeners, trava e controle de acesso sincronizado |
-| Cloud Firestore | Perfis, diretório reduzido, grupos, integrantes, limite, políticas, dispositivos e deduplicação de push |
-| Supabase Storage | Arquivos das fotos de perfil/grupo; somente URL salva no Firestore |
-| Firebase Cloud Messaging | Push nativo Android e iOS enviado pelo Admin SDK da API |
+| Serviço                  | Responsabilidade                                                                                        |
+| ------------------------ | ------------------------------------------------------------------------------------------------------- |
+| Authentication           | Cadastro, login por e-mail/senha, sessão persistente e logout                                           |
+| Realtime Database        | Mensagens individuais/grupo, listeners, trava e controle de acesso sincronizado                         |
+| Cloud Firestore          | Perfis, diretório reduzido, grupos, integrantes, limite, políticas, dispositivos e deduplicação de push |
+| Supabase Storage         | Arquivos das fotos de perfil/grupo; somente URL salva no Firestore                                      |
+| Firebase Cloud Messaging | Push nativo Android e iOS enviado pelo Admin SDK da API                                                 |
 
 Não há Cloud Functions, contas simuladas, mensagens locais de demonstração ou envio administrativo pelo app. A API recebe a mensagem, grava no RTDB e retorna sua confirmação; depois o app solicita o push. Os listeners atualizam o chat sem refresh manual.
 
@@ -82,11 +82,17 @@ O Firestore exige documentos de perfil criados pela API antes de permitir conver
 
 ## Fotos
 
-Supabase Storage Free foi escolhido para evitar exigir faturamento no Firebase. O plano inclui 1 GB de arquivos, sujeito às cotas do serviço: [preços Supabase](https://supabase.com/pricing). O seletor solicita permissão da biblioteca e permite recortar uma imagem quadrada. A aplicação exibe avatar padrão quando não há foto ou ocorre erro de carregamento. Nenhuma imagem Base64 é gravada nos bancos.
+Supabase Storage Free foi escolhido para evitar exigir faturamento no Firebase. O plano inclui 1 GB de arquivos, sujeito às cotas do serviço: [preços Supabase](https://supabase.com/pricing). No aplicativo nativo, Expo FileSystem lê o arquivo selecionado e Expo fetch envia os bytes, sem gravar imagens no banco. O seletor solicita permissão da biblioteca e permite recortar uma imagem quadrada. A aplicação exibe avatar padrão quando não há foto ou ocorre erro de carregamento. Nenhuma imagem Base64 é gravada nos bancos.
 
 1. Crie ou use um projeto Supabase no plano Free. Não é necessário ativar Firebase Storage.
    Projeto da equipe: `https://dcsiztcuyzxskugdydpf.supabase.co`. Configure essa URL como `SUPABASE_URL` no Render.
 2. Execute [supabase/storage.sql](supabase/storage.sql) no SQL Editor. O bucket `brisa-photos` limita arquivos a JPEG/PNG/WebP e menos de 5 MB. A política restritiva impede gravação direta por clientes mesmo se o projeto possuir outras políticas permissivas.
+   A equipe já executou esse arquivo no projeto acima usando a CLI autenticada:
+
+   ```sh
+   supabase db query --linked --project-ref dcsiztcuyzxskugdydpf --file supabase/storage.sql --output json
+   ```
+
 3. Em Render, defina `SUPABASE_URL` com a Project URL e `SUPABASE_SERVICE_ROLE_KEY` com a chave legada `service_role`, disponível em Settings > API Keys. A chave fica somente no servidor. Nunca usar a chave `anon` neste campo nem colocar a chave administrativa no aplicativo/GitHub.
 4. Salve as variáveis e faça redeploy da API. Envie fotos pelo cadastro e pelo formulário de grupo para verificar a integração.
 
@@ -122,7 +128,7 @@ Os arquivos nativos são de cliente, mas precisam corresponder ao Firebase de `f
 
 ### APK Android e build local
 
-[Baixar APK Android de avaliação](https://github.com/VitorCesarinoMarchese/CP2S2_Mobile/releases/download/v1.0.0-android-preview/brisa-android.apk). Esta prévia mantém os itens pendentes descritos no início deste README.
+[Baixar APK Android de avaliação](https://github.com/VitorCesarinoMarchese/CP2S2_Mobile/releases/download/v1.0.1-android-preview/brisa-android.apk). Esta prévia mantém os itens pendentes descritos no início deste README.
 
 O APK de avaliação inclui JavaScript e configuração Firebase. Depois de instalado, não exige Metro, Expo Go ou computador da equipe ligado. Ele usa a API pública e os serviços Firebase.
 
@@ -182,30 +188,30 @@ No modo local sem emuladores, as variáveis administrativas precisam vir de um a
 
 Todos, exceto `/health`, exigem `Authorization: Bearer <Firebase ID token>` de usuário autenticado por senha.
 
-| Método/caminho | Operação |
-| --- | --- |
-| `GET /health` | Disponibilidade e conectividade Firebase |
-| `PUT /users/me` | Salvar cadastro e diretório reduzido |
-| `GET /users/:uid` | Perfil próprio ou de participante de conversa em comum |
-| `POST /conversations/direct` | Criar/localizar par único; body `participantId` |
-| `GET /conversations/:id` | Conferir participação e obter metadados |
-| `POST /groups` | Criar grupo; body `id`, `group` |
-| `POST /photos/uploads` | Autorizar upload Supabase; body `mimeType`, `size`; retorna `uploadUrl`, `photoUrl` |
-| `PUT /groups/:id` | Editar integrantes/limite/política/foto; body `group`, `expectedVersion` |
-| `POST /groups/:id/reconcile` | Concluir edição interrompida; somente proprietário |
-| `POST /conversations/:id/messages` | Persistir mensagem validada; ID estável para retry |
-| `POST /notifications/messages` | Push seguro; body `conversationId`, `messageId` |
-| `PUT /devices/:id` | Registrar/atualizar token e plataforma próprios |
-| `DELETE /devices/:id` | Desregistrar dispositivo no logout |
+| Método/caminho                     | Operação                                                                            |
+| ---------------------------------- | ----------------------------------------------------------------------------------- |
+| `GET /health`                      | Disponibilidade e conectividade Firebase                                            |
+| `PUT /users/me`                    | Salvar cadastro e diretório reduzido                                                |
+| `GET /users/:uid`                  | Perfil próprio ou de participante de conversa em comum                              |
+| `POST /conversations/direct`       | Criar/localizar par único; body `participantId`                                     |
+| `GET /conversations/:id`           | Conferir participação e obter metadados                                             |
+| `POST /groups`                     | Criar grupo; body `id`, `group`                                                     |
+| `POST /photos/uploads`             | Autorizar upload Supabase; body `mimeType`, `size`; retorna `uploadUrl`, `photoUrl` |
+| `PUT /groups/:id`                  | Editar integrantes/limite/política/foto; body `group`, `expectedVersion`            |
+| `POST /groups/:id/reconcile`       | Concluir edição interrompida; somente proprietário                                  |
+| `POST /conversations/:id/messages` | Persistir mensagem validada; ID estável para retry                                  |
+| `POST /notifications/messages`     | Push seguro; body `conversationId`, `messageId`                                     |
+| `PUT /devices/:id`                 | Registrar/atualizar token e plataforma próprios                                     |
+| `DELETE /devices/:id`              | Desregistrar dispositivo no logout                                                  |
 
 ## Políticas de notificação
 
-| Política | Destinatários de push |
-| --- | --- |
-| `all_group_messages` | Todos os integrantes exceto remetente para mensagem geral; selecionados para mensagem direcionada |
-| `mentioned_members` | Somente integrantes mencionados/selecionados |
-| `direct_messages_only` | Grupos não geram push; conversas individuais continuam notificando |
-| `disabled` | Nenhum destinatário daquela conversa |
+| Política               | Destinatários de push                                                                             |
+| ---------------------- | ------------------------------------------------------------------------------------------------- |
+| `all_group_messages`   | Todos os integrantes exceto remetente para mensagem geral; selecionados para mensagem direcionada |
+| `mentioned_members`    | Somente integrantes mencionados/selecionados                                                      |
+| `direct_messages_only` | Grupos não geram push; conversas individuais continuam notificando                                |
+| `disabled`             | Nenhum destinatário daquela conversa                                                              |
 
 Mensagem direcionada continua visível no histórico do grupo. O seletor explícito “Para” no chat gera `target` e `mentionedUserIds`; texto livre com `@nome` não é interpretado automaticamente. A API exclui o remetente e terceiros, confere participação atual e nunca aceita destinatários fornecidos pelo cliente.
 
@@ -289,7 +295,12 @@ Os 14 checks da API publicada validam gerenciamento de grupos, capacidade, conco
 ![Integrantes no Android](docs/screenshots/android-members.png)
 ![Perfil no Android](docs/screenshots/android-profile.png)
 ![Políticas no Android](docs/screenshots/android-group-settings.png)
- iOS permanece sem teste por decisão da equipe. Para o roteiro completo, siga [validação de entrega](docs/validation.md).
+
+Foto de grupo selecionada e recortada na galeria Android, enviada ao Supabase e persistida por URL no Firestore. A URL retornou HTTP 200 com 31.306 bytes. Os sete checks de fotos estão em [live-photo-checks.txt](docs/live-photo-checks.txt).
+
+![Foto enviada pelo Android](docs/screenshots/android-photo-upload.png)
+
+iOS permanece sem teste por decisão da equipe. Para o roteiro completo, siga [validação de entrega](docs/validation.md).
 
 ### Repetir os checks na API publicada
 
@@ -300,6 +311,8 @@ node scripts/verify-live-api.mjs --setup
 # Entre no Android com a conta 0 do arquivo privado indicado e permita notificações.
 node scripts/verify-live-api.mjs --verify
 node --import tsx scripts/verify-api-deadline.mjs
+# Fotos exigem também Supabase CLI autenticada no projeto da equipe.
+node scripts/verify-live-photos.mjs
 node scripts/verify-live-api.mjs --cleanup
 ```
 

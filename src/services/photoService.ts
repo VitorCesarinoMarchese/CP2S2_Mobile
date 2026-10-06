@@ -1,6 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { photoUploadInputSchema, photoUploadSchema } from '../../shared/contracts';
 import { apiRequest } from './api';
+import { readPhotoFile } from './photoFile';
 export type SelectedPhoto = { uri: string; mimeType: string };
 export async function choosePhoto(): Promise<SelectedPhoto | null> {
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -21,10 +22,9 @@ export async function choosePhoto(): Promise<SelectedPhoto | null> {
   return { uri: photo.uri, mimeType: photo.mimeType ?? 'image/jpeg' };
 }
 export async function uploadPhoto(photo: SelectedPhoto): Promise<string> {
-  const response = await fetch(photo.uri);
-  const blob = await response.blob();
-  if (blob.size >= 5 * 1024 * 1024) throw new Error('Escolha uma imagem menor que 5 MB.');
-  const input = photoUploadInputSchema.safeParse({ mimeType: photo.mimeType, size: blob.size });
+  const file = await readPhotoFile(photo.uri);
+  if (file.size >= 5 * 1024 * 1024) throw new Error('Escolha uma imagem menor que 5 MB.');
+  const input = photoUploadInputSchema.safeParse({ mimeType: photo.mimeType, size: file.size });
   if (!input.success) throw new Error('Escolha uma imagem JPEG, PNG ou WebP menor que 5 MB.');
   const upload = await apiRequest('/photos/uploads', photoUploadSchema, {
     method: 'POST',
@@ -36,15 +36,15 @@ export async function uploadPhoto(photo: SelectedPhoto): Promise<string> {
     const result = await fetch(upload.uploadUrl, {
       method: 'PUT',
       headers: { 'Content-Type': input.data.mimeType, 'x-upsert': 'false' },
-      body: blob,
+      body: file.body,
       signal: controller.signal,
     });
     if (!result.ok) throw new Error('Não foi possível enviar a foto. Tente novamente.');
     return upload.photoUrl;
   } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError')
+    if (controller.signal.aborted)
       throw new Error('O envio da foto demorou a responder. Tente novamente.');
-    if (error instanceof TypeError)
+    if (error instanceof TypeError || (error instanceof Error && error.name === 'FetchError'))
       throw new Error('Verifique sua conexão e tente enviar a foto novamente.');
     throw error;
   } finally {

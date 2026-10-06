@@ -33,6 +33,7 @@
     "expo-build-properties": "~55.0.0",
     "expo-crypto": "~55.0.0",
     "expo-dev-client": "~55.0.0",
+    "expo-file-system": "~55.0.26",
     "expo-font": "~55.0.8",
     "expo-image-picker": "~55.0.0",
     "expo-linear-gradient": "~55.0.0",

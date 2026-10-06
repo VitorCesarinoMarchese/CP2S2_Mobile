@@ -43,12 +43,18 @@ Development build Android compilado e instalado no emulador Brisa, Android 15 co
 
 Na API publicada, 14 checks adicionais passaram: unicidade de conversa individual, deduplicação, capacidade de grupo, autorização do proprietário, redução de limite, edições concorrentes, quatro políticas de push e bloqueio de integrante removido. Resultados em `live-api-checks.txt`; roteiro reproduzível em `../scripts/verify-live-api.mjs`. Os números de entrega da API indicam aceitação pelo FCM. A bandeja do Android confirmou também recebimento de menção de grupo, em `screenshots/android-group-push.png`.
 
-Render Free foi mantido por escolha da equipe. O serviço pode suspender após inatividade. Fotos foram migradas para Supabase Storage Free por escolha da equipe; configuração do bucket e credenciais no Render, seguida de teste de upload, ainda precisam ser concluídas. iOS permanece sem teste por decisão da equipe.
+Render Free foi mantido por escolha da equipe. O serviço pode suspender após inatividade. Fotos foram migradas para Supabase Storage Free por escolha da equipe; bucket configurado pela CLI, credenciais já disponíveis no Render e sete checks reais de fotos aprovados. Uma foto selecionada e recortada na galeria Android foi enviada e salva no grupo. iOS permanece sem teste por decisão da equipe.
 
-APK standalone compilado para ARM64 e x86_64, instalado no Android 15. Com Metro desligado, confirmou restauração da sessão, listagem de conversas, chat de grupo, integrantes e consulta de perfil compartilhado. SHA-256: `74b2928c7dd40774080796f178c79f78bed7c7135751b8236597935c8abfb4a7`. Fotos ainda dependem da configuração Supabase no Render.
+APK standalone compilado para ARM64 e x86_64, instalado no Android 15. Com Metro desligado, confirmou restauração da sessão, listagem de conversas, chat de grupo, integrantes e consulta de perfil compartilhado. SHA-256: `61a583037f2f17ea93786881e09a5fa0826053859482dc50270894f91ade91b4`. Foto de grupo verificada no APK atualizado, com URL pública retornando HTTP 200 e 31.306 bytes.
 
 Regressão de timeout: o prazo de 90 segundos inclui obtenção do ID Token, fetch e leitura da resposta. `node --import tsx scripts/verify-api-deadline.mjs`, após setup das contas temporárias, verifica erro de prazo mesmo com obtenção de token bloqueada.
 
 Edição nativa de grupo confirmada: proprietário alterou o limite de 4 para 3 no APK e voltou ao chat com uma vaga disponível. A API retornou o limite persistido.
 
 No APK standalone, uma nova menção de grupo recebeu FCM em segundo plano. O toque abriu o grupo correto e exibiu `Menção no APK Android`; captura atualizada em `screenshots/android-group-chat.png`.
+
+Fotos Supabase verificadas em 2026-10-05: upload assinado, igualdade dos bytes baixados, URLs de perfil e grupo, rejeição de 5 MB pela API, bloqueio de sobrescrita e bloqueio de gravação com chave anônima. Roteiro em `../scripts/verify-live-photos.mjs`, resultados em `live-photo-checks.txt`. A validação opcional `--oversize` envia 5 MB ao Storage com tamanho declarado menor; o serviço pode recusar a conexão antes de devolver JSON. A criação do bucket foi confirmada por consulta na CLI: público, limite 5.242.879 bytes e JPEG/PNG/WebP.
+
+No Android, o APK atualizado confirmou novo login por e-mail/senha, seleção na galeria, recorte e upload da foto de grupo. A API confirmou versão 2 e a nova URL no Firestore. Captura em `screenshots/android-photo-upload.png`. O leitor nativo usa Expo FileSystem para evitar a espera indefinida na leitura de arquivo local por fetch. Expo fetch é inicializado após os globals de rede do React Native. O teste encontrou falha de DNS no Wi-Fi virtual do emulador; a conexão móvel virtual permitiu continuar.
+
+Após o upload de foto, o APK atualizado recebeu push FCM real de conversa individual em segundo plano. O toque abriu a conversa correta e exibiu `Push após teste de foto`.

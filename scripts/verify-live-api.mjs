@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { readFile, writeFile, unlink } from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 
 const require = createRequire(import.meta.url);
 const config = JSON.parse(await readFile(new URL('../firebaseConfig.json', import.meta.url)));
@@ -272,6 +274,22 @@ if (phase === '--setup') {
   );
 } else if (phase === '--cleanup') {
   const state = JSON.parse(await readFile(statePath));
+  for (const path of [...state.uploads]) {
+    assert.match(state.supabaseProjectRef, /^[a-z0-9]+$/);
+    assert.match(path, /^[A-Za-z0-9_-]+\/[A-Za-z0-9_.-]+$/);
+    await promisify(execFile)('supabase', [
+      'storage',
+      'rm',
+      `ss:///brisa-photos/${path}`,
+      '--experimental',
+      '--yes',
+      '--linked',
+      '--project-ref',
+      state.supabaseProjectRef,
+    ]);
+    state.uploads = state.uploads.filter((value) => value !== path);
+    await save(state);
+  }
   const firestore = await googleClient('https://firestore.googleapis.com');
   const documents = `/v1/projects/${config.projectId}/databases/(default)/documents/`;
   for (const account of state.accounts) {
@@ -309,7 +327,9 @@ if (phase === '--setup') {
     await authenticate('delete', { idToken: session.idToken });
   }
   await unlink(statePath);
-  console.log('Removed temporary test accounts, devices, conversations and delivery records.');
+  console.log(
+    'Removed temporary photos, test accounts, devices, conversations and delivery records.',
+  );
 } else {
   throw new Error(
     'Use --setup, --verify, or --cleanup. This script writes temporary data to the real Firebase project.',
